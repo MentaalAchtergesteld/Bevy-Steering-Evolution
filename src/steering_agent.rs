@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 
-use bevy::{math::vec2, prelude::*, window::PrimaryWindow};
+use bevy::{math::{vec2, VectorSpace}, prelude::*, window::PrimaryWindow};
 use rand::Rng;
 
 use crate::{movement::{Acceleration, MaxSpeed, Velocity, VelocityDamping}, GameRng};
@@ -68,7 +68,7 @@ pub struct SteeringAgentBundle {
 impl SteeringAgentBundle {
     pub fn new(position: Vec2, max_speed: f32, max_force: f32, slowing_radius: f32, damping: f32) -> Self {
         Self {
-            transform: Transform::from_translation(position.extend(0.)),
+            transform: Transform::from_translation(position.extend(0.1)),
             velocity: Velocity::default(),
             acceleration: Acceleration::default(),
             damping: VelocityDamping(damping),
@@ -132,29 +132,51 @@ pub fn arrive(
     steering_force
 }
 
+fn spawn_agent(
+    position: Vec2,
+    max_speed: f32,
+    max_force: f32,
+    slowing_radius: f32,
+    damping: f32,
+    mesh: Handle<Mesh>,
+    material: Handle<ColorMaterial>,
+    commands: &mut Commands,
+) -> Entity {
+    commands.spawn((
+        SteeringAgentBundle::new(position, max_speed, max_force, slowing_radius, damping),
+        Mesh2d(mesh),
+        MeshMaterial2d(material),
+    )).id()
+}
+
 fn spawn_initial_agents(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut rng: ResMut<GameRng>
 ) {
-    let triangle_width = 16.;
-    let triangle_height = 24.;
+    let triangle_width = 12.;
+    let triangle_height = 18.;
 
     let triangle_top =   Vec2::new(2.0 * triangle_height / 3.0, 0.0);
     let triangle_left =  Vec2::new(-triangle_height / 3.0     , -triangle_width / 2.0);
     let triangle_right = Vec2::new(-triangle_height / 3.0     , triangle_width / 2.0);
 
-    let agent_count = 128;
+    let agent_count = 8;
 
     for _ in 0..agent_count {
-        commands.spawn((
-            SteeringAgentBundle::new(Vec2::ZERO, 400., 1000., 50., 1.0),
-            Mesh2d(meshes.add(Triangle2d::new(triangle_top, triangle_left, triangle_right))),
-            MeshMaterial2d(materials.add(Color::hsl(rng.0.random_range(0.0..360.0), 1., 0.75))),
-            // FollowMouse,
-            Wander::new(Vec2::ZERO, 64., 1024., &mut rng.0),
-        ));
+        let entity = spawn_agent(
+            Vec2::ZERO,
+            400.,
+            1000.,
+            50.,
+            1.0,
+            meshes.add(Triangle2d::new(triangle_top, triangle_left, triangle_right)),
+            materials.add(Color::hsl(rng.0.random_range(0.0..360.0), 1., 0.75)),
+            &mut commands
+        );
+
+        commands.get_entity(entity).unwrap().insert(Wander::new(Vec2::ZERO, 64., 512., &mut rng.0));
     }
 }
 

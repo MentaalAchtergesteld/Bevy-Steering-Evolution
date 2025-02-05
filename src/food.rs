@@ -2,6 +2,7 @@ use std::f32::consts::TAU;
 
 use bevy::{color::palettes::css::GREEN, prelude::*, window::PrimaryWindow};
 use rand::Rng;
+use rand_distr::{Distribution, Exp};
 
 use crate::{movement::Velocity, GameRng};
 
@@ -64,7 +65,7 @@ fn setup_food_assets(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     commands.insert_resource(FoodAssets {
-        mesh: meshes.add(Circle::new(4.0)),
+        mesh: meshes.add(Circle::new(6.0)),
         material: materials.add(ColorMaterial::from_color(GREEN))
     });
 }
@@ -107,13 +108,13 @@ fn spawn_initial_food(
         nutritional_value: 4.0,
         duplication_chance: 0.1,
         spawn_velocity_min: 5.0,
-        spawn_velocity_max: 40.0,
-        cohesion_radius: 48.0,
+        spawn_velocity_max: 100.0,
+        cohesion_radius: 64.0,
         cohesion_force: 4.0,
-        seperation_radius: 16.0,
-        seperation_force: 32.0,
-        neighbour_radius: 32.0,
-        max_neighbours: 4,
+        seperation_radius: 32.0,
+        seperation_force: 256.0,
+        neighbour_radius: 64.0,
+        max_neighbours: 16,
     };
 
     let food_count = 4;
